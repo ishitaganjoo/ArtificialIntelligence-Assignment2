@@ -1,13 +1,50 @@
-# Simple tetris program! v0.1
+# Simple tetris program! v0.2
 # D. Crandall, Sept 2016
-
+from copy import deepcopy
 from AnimatedTetris import *
 from SimpleTetris import *
 from kbinput import *
 import time, sys
 
+
+
+def evaluate(b):
+	
+	print "******************************in evlaute"
+	for i in b:
+		c=[]
+		for j in range(0,20):
+			val=i[j].count('x')
+			c.append(val)
+		i.append(c)
+	
+	#print b
+	#print "\n b^"
+	fringe=[[' ',[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]]]
+	for i in b:
+		#print i[-1][-1]
+		#print '\n ^-i1'
+		#print fringe[0][-1][-1]
+		#print '\n ^fringe'
+		if i[-1][-1]>fringe[0][-1][-1]:
+			del fringe[:]
+			fringe.append(i)
+		elif i[-1][-1]==fringe[0][-1][-1]:
+			fringe.append(i)
+	
+	print 'fringe'	
+	print fringe
+	print "****************************************"
+
+
+
+
+
+
+
+
 class HumanPlayer:
-    def get_moves(self, piece, board):
+    def get_moves(self, tetris):
         print "Type a sequence of moves using: \n  b for move left \n  m for move right \n  n for rotation\nThen press enter. E.g.: bbbnn\n"
         moves = raw_input()
         return moves
@@ -23,13 +60,72 @@ class HumanPlayer:
 # Replace our super simple algorithm with something better
 #
 class ComputerPlayer:
-    # Given a new piece (encoded as a list of strings) and a board (also list of strings), 
-    # this function should generate a series of commands to move the piece into the "optimal"
+    # This function should generate a series of commands to move the piece into the "optimal"
     # position. The commands are a string of letters, where b and m represent left and right, respectively,
-    # and n rotates. 
+    # and n rotates. tetris is an object that lets you inspect the board, e.g.:
+    #   - tetris.col, tetris.row have the current column and row of the upper-left corner of the 
+    #     falling piece
+    #   - tetris.get_piece() is the current piece, tetris.get_next_piece() is the next piece after that
+    #   - tetris.left(), tetris.right(), tetris.down(), and tetris.rotate() can be called to actually
+    #     issue game commands
+    #   - tetris.get_board() returns the current state of the board, as a list of strings.
     #
-    def get_moves(self, piece, board):
+    def get_moves(self, tetris):
         # super simple current algorithm: just randomly move left, right, and rotate a few times
+	print "\n##################################################"
+	test=deepcopy(tetris)
+	a=test.get_board()
+	#print "first print"
+	#print a
+	piece,row,col=tetris.get_piece()
+	b=[]
+	q=col
+	w=col
+	q=q-1
+	right=deepcopy(test)
+	trace=1
+	while q >= 0 :
+		left=deepcopy(test)
+		for i in range(0,trace):
+			left.left()
+		left.down()
+		a=left.get_board()
+		a.append('left')
+		a.append(trace)
+		b.append(a)
+		q=q-1
+		trace=1+trace
+	w=w+1
+	trace=1
+	while w < 10 :
+		right=deepcopy(test)
+		for i in range(0,trace):
+			right.right()
+		right.down()
+		a=right.get_board()
+		a.append('right')
+		a.append(trace)
+		b.append(a)
+		w=w+1
+		trace=1+trace			
+	
+	evaluate(b)
+	for i in b:
+		print "\n"
+		print i
+	#print "piece row col"
+	#print piece,row,col
+	#test.left()
+	#test.down()
+	#a=test.get_board()
+	#print "second print"
+	#print a
+	#print "length of rows" - its 20 rows , 10 columns
+	#print len(a)
+	#for i in a:
+		#print len(i)
+		#print i.count('x')
+	print "####################################################"
         return random.choice("mnb") * random.randint(1, 10)
        
     # This is the version that's used by the animted version. This is really similar to get_moves,
