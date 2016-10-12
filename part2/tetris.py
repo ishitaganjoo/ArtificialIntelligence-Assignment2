@@ -5,7 +5,7 @@ from AnimatedTetris import *
 from SimpleTetris import *
 from kbinput import *
 import time, sys
-
+import random
 
 
 def evaluate(b):
@@ -18,22 +18,48 @@ def evaluate(b):
 			c.append(val)
 		i.append(c)
 	
-	#print b
-	#print "\n b^"
-	fringe=[[' ',[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]]]
-	for i in b:
-		#print i[-1][-1]
-		#print '\n ^-i1'
-		#print fringe[0][-1][-1]
-		#print '\n ^fringe'
-		if i[-1][-1]>fringe[0][-1][-1]:
+	fringe=[[' ',[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]]]
+	loop_cond=19
+	#print i[-1][loop_cond]
+	#print fringe[0][-1][loop_cond]
+	while loop_cond >=0 :
+		flag=True
+		for i in b:
+			if i[-1][loop_cond]>fringe[0][-1][loop_cond]:
+				del fringe[:]
+				flag=True
+				fringe.append(i)
+				#print '\n'
+				#print i[-1][loop_cond]
+				#print fringe[0][-1][loop_cond]
+			if i[-1][loop_cond] == fringe[0][-1][loop_cond]:
+				fringe.append(i)
+				#print '\n before the if'
+				#print i[-1]
+				#print fringe[0][-1]
+				if i[-1]!=fringe[0][-1]:
+					flag=False
+		
+		#print '\nfringe'
+		#print fringe
+		#print flag
+		if flag == True:
+			h=random.randrange(0,len(fringe))
+			#print h
+			#print 'chosen is'
+			loop_cond=-1
+			return fringe[h]  #return this
+			
+		if flag == False:
+			loop_cond=loop_cond-1
+			del b[:]
+			b=fringe[:]
 			del fringe[:]
-			fringe.append(i)
-		elif i[-1][-1]==fringe[0][-1][-1]:
-			fringe.append(i)
-	
-	print 'fringe'	
-	print fringe
+			fringe=[[' ',[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]]]
+		
+				
+			
+		
 	print "****************************************"
 
 
@@ -109,10 +135,17 @@ class ComputerPlayer:
 		w=w+1
 		trace=1+trace			
 	
-	evaluate(b)
-	for i in b:
-		print "\n"
-		print i
+	k=evaluate(b) #got the place to move
+	if k[-3]=='right':
+		m='m'
+	else:
+		m='b'
+	#print k
+	#print m
+	#print k[-2]
+	#for i in b:
+		#print "\n"
+		#print i
 	#print "piece row col"
 	#print piece,row,col
 	#test.left()
@@ -126,7 +159,8 @@ class ComputerPlayer:
 		#print len(i)
 		#print i.count('x')
 	print "####################################################"
-        return random.choice("mnb") * random.randint(1, 10)
+	return m * k[-2]
+        #return random.choice("mnb") * random.randint(1, 10)
        
     # This is the version that's used by the animted version. This is really similar to get_moves,
     # except that it runs as a separate thread and you should access various methods and data in
