@@ -8,21 +8,23 @@ import time, sys
 import random
 
 
-def evaluate(b):
+def evaluate(b):#this function evaluates best position to place tetris block
 	
-	print "******************************in evlaute"
-	for i in b:
+	#print "******************************in evlaute"
+	for i in b:#this loop gets count of x in each column
 		c=[]
 		for j in range(0,20):
 			val=i[j].count('x')
 			c.append(val)
 		i.append(c)
 	
-	fringe=[[' ',[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]]]
+	#print b
+	#print "b\n"
+	fringe=[[' ',[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]]] #simply called it fringe not a fringe in essence but close
 	loop_cond=19
 	#print i[-1][loop_cond]
 	#print fringe[0][-1][loop_cond]
-	while loop_cond >=0 :
+	while loop_cond >=0 :#find the highest populated column
 		flag=True
 		for i in b:
 			if i[-1][loop_cond]>fringe[0][-1][loop_cond]:
@@ -32,7 +34,7 @@ def evaluate(b):
 				#print '\n'
 				#print i[-1][loop_cond]
 				#print fringe[0][-1][loop_cond]
-			if i[-1][loop_cond] == fringe[0][-1][loop_cond]:
+			if i[-1][loop_cond] == fringe[0][-1][loop_cond]:#check if the newly added element is same as the first
 				fringe.append(i)
 				#print '\n before the if'
 				#print i[-1]
@@ -43,14 +45,14 @@ def evaluate(b):
 		#print '\nfringe'
 		#print fringe
 		#print flag
-		if flag == True:
+		if flag == True:#if all elements in fringe have same arrangement value pick from random probably could do some thinking here
 			h=random.randrange(0,len(fringe))
-			#print h
+			#print fringe[h]
 			#print 'chosen is'
 			loop_cond=-1
 			return fringe[h]  #return this
 			
-		if flag == False:
+		if flag == False:#if they arent same start searching from the next coulmn
 			loop_cond=loop_cond-1
 			del b[:]
 			b=fringe[:]
@@ -60,7 +62,7 @@ def evaluate(b):
 				
 			
 		
-	print "****************************************"
+	#print "****************************************"
 
 
 
@@ -97,69 +99,110 @@ class ComputerPlayer:
     #   - tetris.get_board() returns the current state of the board, as a list of strings.
     #
     def get_moves(self, tetris):
-        # super simple current algorithm: just randomly move left, right, and rotate a few times
-	print "\n##################################################"
 	test=deepcopy(tetris)
 	a=test.get_board()
-	#print "first print"
-	#print a
 	piece,row,col=tetris.get_piece()
 	b=[]
-	q=col
-	w=col
-	q=q-1
 	right=deepcopy(test)
 	trace=1
-	while q >= 0 :
-		left=deepcopy(test)
-		for i in range(0,trace):
-			left.left()
-		left.down()
-		a=left.get_board()
-		a.append('left')
-		a.append(trace)
-		b.append(a)
+	moves_list=[['x', 'x', 'x', 'x'],['xxxx'],['xx', 'xx'],['xxx', ' x '],[' x', 'xx', ' x'],[' x ', 'xxx'],['x ', 'xx', 'x '],['x  ', 'xxx'],['xx', 'x ', 'x '],['xxx', '  x'],[' x', ' x', 'xx'],['xx ', ' xx'],[' x', 'xx', 'x '],['xx ', ' xx'],[' x', 'xx', 'x ']]#this list contains all the moves of tetris, we now have more moves than mick jagger !!!
+	ind=moves_list.index(piece)
+	rot=0
+	if ind <=1: #find which kind it belongs to
+		rot=1#line
+	elif ind==2:
+		rot=0#box
+	elif ind>2 and ind<7:
+		rot=3#T
+	elif ind>6 and ind<11:
+		rot=3#L
+	elif ind>10 and ind <15:
+		rot=2#z
+	count_rot=0
+	while rot>=0:#while we have more rotations
+		skip=1
+		score=tetris.get_score()
+		q=col
+		w=col
 		q=q-1
-		trace=1+trace
-	w=w+1
-	trace=1
-	while w < 10 :
-		right=deepcopy(test)
-		for i in range(0,trace):
-			right.right()
-		right.down()
-		a=right.get_board()
-		a.append('right')
-		a.append(trace)
-		b.append(a)
+		while q >= 0 : #move left
+			left=deepcopy(test)
+			for i in range(0,trace):
+				left.left()
+			left.down()
+			a=left.get_board()
+			a.append('left')
+			a.append(trace)
+			a.append(count_rot)
+			b.append(a)
+			#new_score
+			if left.get_score() > score:#we cleared a column
+				del b[:]
+				del a[:]
+				b.append('left')
+				b.append(trace)
+				b.append(count_rot)
+				#b.append(a)				
+				b.append([-1,-1,-1,-1])
+				w=11
+				rot=-3
+				skip=0
+				break
+				#print a
+				#print 'yahtzee'
+				#exit()
+			q=q-1
+			trace=1+trace
 		w=w+1
-		trace=1+trace			
-	
-	k=evaluate(b) #got the place to move
-	if k[-3]=='right':
+		trace=1
+		while w < 10 :
+			right=deepcopy(test)#move right
+			for i in range(0,trace):
+				right.right()
+			right.down()
+			a=right.get_board()
+			a.append('right')
+			a.append(trace)
+			a.append(count_rot)
+			b.append(a)
+			if right.get_score() > score:#we cleared a column
+				#print 'yahtzee'
+				del b[:]
+				del a[:]
+				b.append('right')
+				b.append(trace)
+				b.append(count_rot)
+				#b.append(a)
+				b.append([-1,-1,-1,-1])
+				rot=-3
+				skip=0
+				break
+				#print a
+				#exit()
+			w=w+1
+			trace=1+trace
+		rot=rot-1
+		count_rot=count_rot+1
+		test.rotate()			
+	#print b
+	if skip:
+		k=evaluate(b) #got the place to move
+	else:
+		k=b[:]
+		print k	
+	#print k
+	#print "^k"
+	#print k[-4] # right or left
+	#print k[-3] #position
+	if k[-4]=='right':
 		m='m'
 	else:
 		m='b'
-	#print k
-	#print m
-	#print k[-2]
-	#for i in b:
-		#print "\n"
-		#print i
-	#print "piece row col"
-	#print piece,row,col
-	#test.left()
-	#test.down()
-	#a=test.get_board()
-	#print "second print"
-	#print a
-	#print "length of rows" - its 20 rows , 10 columns
-	#print len(a)
-	#for i in a:
-		#print len(i)
-		#print i.count('x')
-	print "####################################################"
-	return m * k[-2]
+
+	#print "####################################################"
+	for i in range(0,k[-2]):
+		tetris.rotate()
+	return m * k[-3]
         #return random.choice("mnb") * random.randint(1, 10)
        
     # This is the version that's used by the animted version. This is really similar to get_moves,
