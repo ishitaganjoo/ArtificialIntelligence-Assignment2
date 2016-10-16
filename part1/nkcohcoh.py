@@ -44,7 +44,7 @@ else:
     max_time=int(sys.argv[4])
 
 #initialize a N*N board for playing Ncohcoh-k
-initial_board = [[0 for c in range(N)] for r in range(N)]
+initial_board = [[0 for i in range(N)] for j in range(N)]
 
 #Adding elements in the board
 i=0
@@ -308,11 +308,11 @@ def ncohcoh_main(board):
             temp = minimize_func(s,-infinity,infinity,depth)
             #print "===============Temporary Value:::========= %d " %temp
             #print "Max Dept: *****************************%d" %ndepth
-            if temp > move:                    
+            if temp == move and ndepth > best_depth:                    
                 best_depth = ndepth
                 move = temp
                 best_board = s
-            elif temp == move and ndepth > best_depth :
+            elif temp > move :
                 #print "Best Dept: *****************************%d" %ndepth
                 best_depth = ndepth
                 move = temp
