@@ -225,10 +225,7 @@ def minimize_func(board,alpha, beta,depth):
             return v
         beta=min(beta,v)
         if time.time()-start >max_time-0.1:
-            if v==infinity:
-                return 0
-            else:
-                return v
+            return v
     #print "min value: %d" % v    
     return v
 
@@ -254,10 +251,7 @@ def maximize_func(board,alpha, beta,depth):
             return v
         alpha=max(alpha,v)
         if time.time()-start>max_time -0.1:
-            if v==-infinity:
-                return 0
-            else:
-                return v
+            return v
     #print "max value: %d" % v    
     return v    
 def ncohcoh_main(board):
