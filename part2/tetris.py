@@ -23,13 +23,16 @@ class HumanPlayer:
 ## GOAL STATE : A complete row.
 ## SUCCESSOR FUNCTION : For a given incoming piece, calculate all the possible placements on the board, and assign each position a heuritic value.
 ## STATE SPACE : The board.
+## Edge Weights : Assuming all the edge weights to be the same.
 ## HEURISTIC FUNCTION :
 ## Heuristic formula: a*aggregate height + b*no of completed lines + c*no of holes + d*bumpiness
 ## where a,b,c,d are the coefficients such that a,c,d are smaller as compared to b, because we want to maximize the completed lines.
 ## And a,c,d aim to minimize the variation in the height and the no of holes in the current board state.
+## Our goal is to maximize the score which can be achieved by maximizing the no of completed lines. The heuristic will aim to do that.
+## We will place the piece in all possible permutations on the board and choose the best option.
 
 ##2.EXPLANATION : Take the current tetris object,create a deepcopy of it, rotate the copy  and move it to left till it reaches column 0.
-## Save the moves and the current state of the object in a dictionary.
+## Save all the moves and the current state of the object in a dictionary when we move left.
 ## Now move the rotated tetris object to the right till it reaches the last column.
 ## Save this permutation too in the dictionary with key as the moves and value as the state of the board.
 ## Now the dictionary contains all possible permutations of the current tetris object.
@@ -43,6 +46,8 @@ class HumanPlayer:
 ## Used a reference to estimate the value of the coefficients for the heuristic function.
 ## REFERENCE - https://codemyroad.wordpress.com/2013/04/14/tetris-ai-the-near-perfect-player/ 
 ## Assumptions - We are assuming that all the pieces have equal probability.
+
+## High level discussion to find all the possible permutations of the object done with Rohil Bansal
 #####
 # This is the part you'll want to modify!
 # Replace our super simple algorithm with something better
@@ -112,7 +117,6 @@ class ComputerPlayer:
     
     # calculate all the possible moves for the current piece!!
     def getPossibleMove(self, tetris):
-        copy1 = deepcopy(tetris)
         dictionary = {}
         for i in range(0, 4):
             moves = ""
@@ -125,16 +129,16 @@ class ComputerPlayer:
                 copyLeft = deepcopy(copy)
                 copyRight = deepcopy(copy)
                 current_piece_col = copy.get_piece()[2]
-                for i in range(0, current_piece_col):
-                    for j in range(0, i+1):
+                for k in range(0, current_piece_col):
+                    for j in range(0, k+1):
                         copyLeft.left()
                         movesLeft += "b" #Append b everytime the piece moves left
                     copyLeft.down()
                     dictionary[movesLeft] = copyLeft.get_board()
                     copyLeft = deepcopy(copy)
                     movesLeft = moves
-                for i in range(0, 10-current_piece_col):
-                    for j in range(0, i):
+                for k in range(0, 10-current_piece_col):
+                    for j in range(0, k):
                         copyRight.right()
                         movesRight += "m" #Append m everytime the piece moves right
                     copyRight.down()
@@ -152,7 +156,6 @@ class ComputerPlayer:
         for key in dictionary:
             heuristic_val = self.calculate_heuristic(dictionary[key])
             dict_heuristics[key] = heuristic_val
-        print(dict_heuristics)
         #pick the moves corresponding to the maximum heuristic value
 	return (max(dict_heuristics, key=dict_heuristics.get))
         
@@ -171,27 +174,15 @@ class ComputerPlayer:
         # another super simple algorithm: just move piece to the least-full column
         while 1:
             time.sleep(0.1)
-            '''
-            board = tetris.get_board()
-            column_heights = [ min([ r for r in range(len(board)-1, 0, -1) if board[r][c] == "x"  ] + [100,] ) for c in range(0, len(board[0]) ) ]
-            index = column_heights.index(max(column_heights))
-
-            if(index < tetris.col):
-                tetris.left()
-            elif(index > tetris.col):
-                tetris.right()
-            else:
-                tetris.down()'''
             
             dictionary = self.getPossibleMove(tetris)
             dict_heuristics = {}
             for key in dictionary:
                 heuristic_val = self.calculate_heuristic(dictionary[key])
                 dict_heuristics[key] = heuristic_val
-        #print(dict_heuristics)
+        
         #pick the moves corresponding to the maximum heuristic value
             strVal = (max(dict_heuristics, key=dict_heuristics.get))
-	    print(strVal)
             for i in range(0, len(strVal)):
 	        if(strVal[i] == 'b'):
                     tetris.left()
