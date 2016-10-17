@@ -1,75 +1,11 @@
 # Simple tetris program! v0.2
 # D. Crandall, Sept 2016
-from copy import deepcopy
+
 from AnimatedTetris import *
 from SimpleTetris import *
 from kbinput import *
 import time, sys
-import random
-
-
-def evaluate(b):#this function evaluates best position to place tetris block
-	
-	#print "******************************in evlaute"
-	for i in b:#this loop gets count of x in each column
-		c=[]
-		for j in range(0,20):
-			val=i[j].count('x')
-			c.append(val)
-		i.append(c)
-	
-	#print b
-	#print "b\n"
-	fringe=[[' ',[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]]] #simply called it fringe not a fringe in essence but close
-	loop_cond=19
-	#print i[-1][loop_cond]
-	#print fringe[0][-1][loop_cond]
-	while loop_cond >=0 :#find the highest populated column
-		flag=True
-		for i in b:
-			if i[-1][loop_cond]>fringe[0][-1][loop_cond]:
-				del fringe[:]
-				flag=True
-				fringe.append(i)
-				#print '\n'
-				#print i[-1][loop_cond]
-				#print fringe[0][-1][loop_cond]
-			if i[-1][loop_cond] == fringe[0][-1][loop_cond]:#check if the newly added element is same as the first
-				fringe.append(i)
-				#print '\n before the if'
-				#print i[-1]
-				#print fringe[0][-1]
-				if i[-1]!=fringe[0][-1]:
-					flag=False
-		
-		#print '\nfringe'
-		#print fringe
-		#print flag
-		if flag == True:#if all elements in fringe have same arrangement value pick from random probably could do some thinking here
-			h=random.randrange(0,len(fringe))
-			#print fringe[h]
-			#print 'chosen is'
-			loop_cond=-1
-			return fringe[h]  #return this
-			
-		if flag == False:#if they arent same start searching from the next coulmn
-			loop_cond=loop_cond-1
-			del b[:]
-			b=fringe[:]
-			del fringe[:]
-			fringe=[[' ',[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]]]
-		
-				
-			
-		
-	#print "****************************************"
-
-
-
-
-
-
-
+from copy import deepcopy
 
 class HumanPlayer:
     def get_moves(self, tetris):
@@ -82,7 +18,31 @@ class HumanPlayer:
             c = get_char_keyboard()
             commands =  { "b": tetris.left, "n": tetris.rotate, "m": tetris.right, " ": tetris.down }
             commands[c]()
+##1.ABSTRACTION : 
+## START STATE : An empty tetris board.
+## GOAL STATE : A complete row.
+## SUCCESSOR FUNCTION : For a given incoming piece, calculate all the possible placements on the board, and assign each position a heuritic value.
+## STATE SPACE : The board.
+## HEURISTIC FUNCTION :
+## Heuristic formula: a*aggregate height + b*no of completed lines + c*no of holes + d*bumpiness
+## where a,b,c,d are the coefficients such that a,c,d are smaller as compared to b, because we want to maximize the completed lines.
+## And a,c,d aim to minimize the variation in the height and the no of holes in the current board state.
 
+##2.EXPLANATION : Take the current tetris object,create a deepcopy of it, rotate the copy  and move it to left till it reaches column 0.
+## Save the moves and the current state of the object in a dictionary.
+## Now move the rotated tetris object to the right till it reaches the last column.
+## Save this permutation too in the dictionary with key as the moves and value as the state of the board.
+## Now the dictionary contains all possible permutations of the current tetris object.
+## HEURISTIC : Design a heuristic that minimizes the no of holes in the state, minimizes the difference in heights of adjacent columns, minimizes
+## the average height of the board, and maximizes the no of completed lines.
+## Pass each value(state of the board) to the heuristic function and compute a heuristic value for it.
+## Save heuristic values for all the states in a dictionary and pick the best possible value of the heuristic.
+## Return the moves corresponding to the maximum heuristic value.
+
+##3.Problems faced - While designing the heuristics,faced problem to estimate the value of  the coefficients.
+## Used a reference to estimate the value of the coefficients for the heuristic function.
+## REFERENCE - https://codemyroad.wordpress.com/2013/04/14/tetris-ai-the-near-perfect-player/ 
+## Assumptions - We are assuming that all the pieces have equal probability.
 #####
 # This is the part you'll want to modify!
 # Replace our super simple algorithm with something better
@@ -98,112 +58,104 @@ class ComputerPlayer:
     #     issue game commands
     #   - tetris.get_board() returns the current state of the board, as a list of strings.
     #
+    
+    def calculate_heuristic(self,current_state):
+        # use four possible heuristics:
+        #reference used :https://codemyroad.wordpress.com/2013/04/14/tetris-ai-the-near-perfect-player/
+        a = -0.510066
+        b =  0.760666
+        c = -0.35633
+        d = -0.184483
+        dict={}
+        dict_holes = {} #will contain values corresponding to each column
+        for k in range(10):
+            dict[k]=0 #intialize dictionary
+        
+        noOfCompleteLines,noOfHoles,count,bumpiness,x,y = 0,0,0,0,0,1
+        #noOfCompleteLines = n #add lines that vanished after moving the block down
+        for i in range(0,20): #from 0 to 20
+            row = current_state[i]
+            count = row.count('x')
+            if count== 10:
+                noOfCompleteLines+=1
+            for j in range(0,10): #from 0 to 10 for all the column values in the row
+                if dict[j] == 0 and row[j] == 'x': #to calculate the height of each column
+                    dict[j] = 20-i
+                    
+                if j not in dict_holes: #append the value of each column
+                    dict_holes[j] = [row[j]]
+                else:
+                    dict_holes[j].append(row[j])    
+        
+         
+        while y<10:
+            bumpiness+=abs(dict[x]-dict[y]) #difference between heights of adjacent columns
+            x+=1
+            y+=1
+        
+        #calculate the number of holes by iterating on each column
+        for key in dict_holes:
+            startCount = False
+            valueOfColumn = dict_holes[key]
+            
+            for m in range(0, len(valueOfColumn)):
+                if startCount and valueOfColumn[m] == ' ': #check if an x has been encountered, count the no of holes below that
+                    noOfHoles+=1
+                if not startCount and valueOfColumn[m]=='x':
+                    startCount = True
+            
+        aggregateHeight = sum(dict.values()) # sum of all the values of columns
+        
+        heuristic_val = a*aggregateHeight + b*noOfCompleteLines + c*noOfHoles + d*bumpiness 
+        return heuristic_val
+    
+    
+    # calculate all the possible moves for the current piece!!
+    def getPossibleMove(self, tetris):
+        copy1 = deepcopy(tetris)
+        dictionary = {}
+        for i in range(0, 4):
+            moves = ""
+            copy = deepcopy(tetris)
+            for j in range(0, i+1):
+                copy.rotate()
+                moves += "n" #Append n for each rotation
+                movesLeft = moves
+                movesRight = moves
+                copyLeft = deepcopy(copy)
+                copyRight = deepcopy(copy)
+                current_piece_col = copy.get_piece()[2]
+                for i in range(0, current_piece_col):
+                    for j in range(0, i+1):
+                        copyLeft.left()
+                        movesLeft += "b" #Append b everytime the piece moves left
+                    copyLeft.down()
+                    dictionary[movesLeft] = copyLeft.get_board()
+                    copyLeft = deepcopy(copy)
+                    movesLeft = moves
+                for i in range(0, 10-current_piece_col):
+                    for j in range(0, i):
+                        copyRight.right()
+                        movesRight += "m" #Append m everytime the piece moves right
+                    copyRight.down()
+                    dictionary[movesRight] = copyRight.get_board()
+                    copyRight = deepcopy(copy)
+                    movesRight = moves
+                    
+        return dictionary
+                
     def get_moves(self, tetris):
-	test=deepcopy(tetris)
-	a=test.get_board()
-	piece,row,col=tetris.get_piece()
-	b=[]
-	right=deepcopy(test)
-	trace=1
-	moves_list=[['x', 'x', 'x', 'x'],['xxxx'],['xx', 'xx'],['xxx', ' x '],[' x', 'xx', ' x'],[' x ', 'xxx'],['x ', 'xx', 'x '],['x  ', 'xxx'],['xx', 'x ', 'x '],['xxx', '  x'],[' x', ' x', 'xx'],['xx ', ' xx'],[' x', 'xx', 'x '],['xx ', ' xx'],[' x', 'xx', 'x ']]#this list contains all the moves of tetris, we now have more moves than mick jagger !!!
-	ind=moves_list.index(piece)
-	rot=0
-	if ind <=1: #find which kind it belongs to
-		rot=1#line
-	elif ind==2:
-		rot=0#box
-	elif ind>2 and ind<7:
-		rot=3#T
-	elif ind>6 and ind<11:
-		rot=3#L
-	elif ind>10 and ind <15:
-		rot=2#z
-	count_rot=0
-	while rot>=0:#while we have more rotations
-		skip=1
-		score=tetris.get_score()
-		q=col
-		w=col
-		q=q-1
-		while q >= 0 : #move left
-			left=deepcopy(test)
-			for i in range(0,trace):
-				left.left()
-			left.down()
-			a=left.get_board()
-			a.append('left')
-			a.append(trace)
-			a.append(count_rot)
-			b.append(a)
-			#new_score
-			if left.get_score() > score:#we cleared a column
-				del b[:]
-				del a[:]
-				b.append('left')
-				b.append(trace)
-				b.append(count_rot)
-				#b.append(a)				
-				b.append([-1,-1,-1,-1])
-				w=11
-				rot=-3
-				skip=0
-				break
-				#print a
-				#print 'yahtzee'
-				#exit()
-			q=q-1
-			trace=1+trace
-		w=w+1
-		trace=1
-		while w < 10 :
-			right=deepcopy(test)#move right
-			for i in range(0,trace):
-				right.right()
-			right.down()
-			a=right.get_board()
-			a.append('right')
-			a.append(trace)
-			a.append(count_rot)
-			b.append(a)
-			if right.get_score() > score:#we cleared a column
-				#print 'yahtzee'
-				del b[:]
-				del a[:]
-				b.append('right')
-				b.append(trace)
-				b.append(count_rot)
-				#b.append(a)
-				b.append([-1,-1,-1,-1])
-				rot=-3
-				skip=0
-				break
-				#print a
-				#exit()
-			w=w+1
-			trace=1+trace
-		rot=rot-1
-		count_rot=count_rot+1
-		test.rotate()			
-	#print b
-	if skip:
-		k=evaluate(b) #got the place to move
-	else:
-		k=b[:]
-		print k	
-	#print k
-	#print "^k"
-	#print k[-4] # right or left
-	#print k[-3] #position
-	if k[-4]=='right':
-		m='m'
-	else:
-		m='b'
-
-	#print "####################################################"
-	for i in range(0,k[-2]):
-		tetris.rotate()
-	return m * k[-3]
-        #return random.choice("mnb") * random.randint(1, 10)
+        # super simple current algorithm: just randomly move left, right, and rotate a few times
+        #create a dictionary of all possible moves and a dictionary of all possible heuristics
+        dictionary =  self.getPossibleMove(tetris)
+        dict_heuristics = {}
+        for key in dictionary:
+            heuristic_val = self.calculate_heuristic(dictionary[key])
+            dict_heuristics[key] = heuristic_val
+        print(dict_heuristics)
+        #pick the moves corresponding to the maximum heuristic value
+	return (max(dict_heuristics, key=dict_heuristics.get))
+        
        
     # This is the version that's used by the animted version. This is really similar to get_moves,
     # except that it runs as a separate thread and you should access various methods and data in
@@ -219,7 +171,7 @@ class ComputerPlayer:
         # another super simple algorithm: just move piece to the least-full column
         while 1:
             time.sleep(0.1)
-
+            '''
             board = tetris.get_board()
             column_heights = [ min([ r for r in range(len(board)-1, 0, -1) if board[r][c] == "x"  ] + [100,] ) for c in range(0, len(board[0]) ) ]
             index = column_heights.index(max(column_heights))
@@ -229,7 +181,26 @@ class ComputerPlayer:
             elif(index > tetris.col):
                 tetris.right()
             else:
-                tetris.down()
+                tetris.down()'''
+            
+            dictionary = self.getPossibleMove(tetris)
+            dict_heuristics = {}
+            for key in dictionary:
+                heuristic_val = self.calculate_heuristic(dictionary[key])
+                dict_heuristics[key] = heuristic_val
+        #print(dict_heuristics)
+        #pick the moves corresponding to the maximum heuristic value
+            strVal = (max(dict_heuristics, key=dict_heuristics.get))
+	    print(strVal)
+            for i in range(0, len(strVal)):
+	        if(strVal[i] == 'b'):
+                    tetris.left()
+		elif(strVal[i] == 'm'):
+                    tetris.right()
+            	else:
+                    tetris.rotate()
+            tetris.down()
+            
 
 
 ###################
@@ -256,6 +227,4 @@ try:
 
 except EndOfGame as s:
     print "\n\n\n", s
-
-
 
