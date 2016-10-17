@@ -62,6 +62,28 @@ def current_number_marble(board):
             if board[i][j] != '.':
                 c=c+1
     return c
+#functions used from assignment 0 code
+def add_piece(board, row, col, val):
+    return board[0:row] + [board[row][0:col] + [val, ] + board[row][col + 1:]] + board[row + 1:]
+
+#generate all possible states from any given state of the board
+def successors(board):
+    global first_player
+    string=str(board)
+    counterw=string.count('w')
+    counterb=string.count('b')    
+    if counterw > counterb:
+        val='b'
+    else:
+        val='w'
+    lst=[]
+    for r in range(0, N):
+        for c in range(0,N):
+            if board[r][c]=='.': 
+                #board[r][c]=val 
+                #lst[r][c]=val             
+                lst.append(add_piece(board, r, c, val))
+    return lst
 #check whether the board reached into a goal state
 def is_goal(board):    
     global mainplayer
@@ -181,28 +203,7 @@ def is_goal(board):
         return 0
     #still not finished
     return "Not finished"
-#functions used from assignment 0 code
-def add_piece(board, row, col, val):
-    return board[0:row] + [board[row][0:col] + [val, ] + board[row][col + 1:]] + board[row + 1:]
 
-#generate all possible states from any given state of the board
-def successors(board):
-    global first_player
-    string=str(board)
-    counterw=string.count('w')
-    counterb=string.count('b')    
-    if counterw > counterb:
-        val='b'
-    else:
-        val='w'
-    lst=[]
-    for r in range(0, N):
-        for c in range(0,N):
-            if board[r][c]=='.': 
-                #board[r][c]=val 
-                #lst[r][c]=val             
-                lst.append(add_piece(board, r, c, val))
-    return lst
 def minimize_func(board,alpha, beta,depth):
     global ndepth
     global highest_level
