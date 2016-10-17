@@ -15,6 +15,11 @@
 #First the depth limit(highest_level) is very low and we tried to find best solution from the depths below the depth limit
 #if the time still allows then it increases the depth limit and try to find the best solution within that depth
 #if after completing the search within the depth limit it seems that the time exceeds then it gives the best solution found till depth#
+#Problem Faced: As the number of successors generated is too high it was difficult to track whether the algorithm is working fine or not
+#Even with the use of alpha beta pruning the algorithm is slow for high value of N
+#Interesting Observations: For an empty board, for N=3 and K=3, there is only one position where there is a possibility of making draw for the 
+#first player, for any other position it will loose
+
 import time
 import sys
 #state="................"
